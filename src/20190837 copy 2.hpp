@@ -51,16 +51,16 @@ void policy_iteration(const Eigen::Vector<int, 12>& state){
     //Evaluate on-policy value recursively starting from given state
     while(!converged){
       converged = 1;
-      evaluate_policy(binarystate);
+      evaluate_policy(binarystate, 0);
     }
     converged=0;
 
     //policy improvement: set policy as argmax over current value function
-    improve_policy(binarystate);
+    improve_policy(binarystate, 0);
   }
 }
 
-void evaluate_policy(int state){
+void evaluate_policy(int state, int justscored){
   int reward;
   int numstates;
   double valuesum;
@@ -84,9 +84,9 @@ void evaluate_policy(int state){
 // if received reward but just won then let opponent play evaluate nextstate and set justwon to 1.
 // if not received reward, then let opponent play, and evaluate nextstate and set justwon to 0.
 
-  if(reward){
+  if(reward && !justscored){
     nextstate = stateaction;
-    evaluate_policy(nextstate); //another chance
+    evaluate_policy(nextstate, 1); //another chance
     if(value[state] != (reward + value[nextstate])){
       value[state] = reward + value[nextstate]; //update value
       converged = 0;
@@ -95,7 +95,7 @@ void evaluate_policy(int state){
   }
   else{
     for(int i=0; i<12; i++){ //update V(s') first
-      if(!(stateaction&(1<<i))){ //for all s'
+      if(!(stateaction&(1<<i))){
         nextstate = stateaction | (1<<i);
         evaluate_policy(nextstate, 0);
       }
@@ -120,7 +120,7 @@ void evaluate_policy(int state){
 
 
 //policy improvement
-int improve_policy(int state){
+int improve_policy(int state, int justscored){
   int reward;
   int numstates;
   double valuesum;
@@ -174,7 +174,7 @@ int improve_policy(int state){
 }
 
 
-//auxillary functions
+//functions
 int tobinary(const Eigen::Vector<int, 12>& state){
   int binarystate=0;
   for(int i=0; i<12; i++){
@@ -187,16 +187,16 @@ int tobinary(const Eigen::Vector<int, 12>& state){
 
 int countsquares(int state){
   int count = 0;
-  if((state&325) == 325){
+  if(state&325 == 325){
     count++; //upper left square
   }
-  if((state&1290) == 1290){
+  if(state&1290 == 1290){
     count++; //upper right square
   }
-  if((state&660) == 660){
+  if(state&660 == 660){
     count++; //bottom left square
   }
-  if((state&2600) == 2600){
+  if(state&2600 == 2600){
     count++; //bottom right square
   }
   return count;
