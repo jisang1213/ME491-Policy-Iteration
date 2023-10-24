@@ -96,7 +96,7 @@ int getOptimalActionhelper(const Eigen::Vector<int, 12>& state, int justscored){
   Eigen::Vector<int, 12> secondturn;
   int squares_before;
   int squares_after;
-  int reward;
+  int reward=0;
   int emptyspaces;
   double maxactionvalue=0;
   double actionvalue;
