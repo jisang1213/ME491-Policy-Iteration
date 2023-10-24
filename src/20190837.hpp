@@ -2,17 +2,19 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
-double value[4096];
-int policy[4095];
-int binarystate;
+//global variables
+double value[4096]; //stores values
+int policy[4095]; //stores policy
 int stable;
 int converged;
 
-void improve_policy();
-void evaluate_policy();
+//prototypes
 void policy_iteration(const Eigen::Vector<int, 12>& state);
+void evaluate_policy();
+void improve_policy();
 int tobinary(const Eigen::Vector<int, 12>& state);
 int countsquares(int state);
+
 
 /// DO NOT CHANGE THE NAME AND FORMAT OF THIS FUNCTION
 double getOptimalValue(const Eigen::Vector<int, 12>& state){
@@ -26,32 +28,32 @@ int getOptimalAction(const Eigen::Vector<int, 12>& state){
   return policy[tobinary(state)];
 }
 
+
 void policy_iteration(){
   //store state-value and state-action in array and represent state in binary for index
   stable=0;
   converged=0;
 
   //initialize values
-  value[4095] = 0; //4095 is terminal state
-  for(int i=0; i<4095; i++){
-    value[i]=2; //initialize to 2
+  value[4095] = 0; //4095 is the terminal state
+  for(int state=0; state<4095; state++){
+    value[state]=2; //initialize values to 2 
   }
   //initialize policy
-  for(int i=0; i<4095; i++){
+  for(int state=0; state<4095; state++){
     //search for possible action(empty spaces) from given state and choose first available action
     for(int j=0; j<12; j++){
-      if(!(i&(1<<j)))
-      policy[i] = j;
+      if(!(state&(1<<j))) //if space is empty
+      policy[state] = j; //initialize policy to first available action
       break;
     }
   }
 
   while(!stable){
     stable=1;
-    //Evaluate on-policy value recursively starting from given state
     while(!converged){
       converged = 1;
-      evaluate_policy();
+      evaluate_policy(); //Evaluate on-policy value
     }
     converged=0;
 
