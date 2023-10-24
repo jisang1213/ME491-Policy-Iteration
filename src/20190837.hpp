@@ -8,28 +8,28 @@ int binarystate;
 int stable;
 int converged;
 
-// void evaluate_policy(int state, int justscored);
-int improve_policy(int state, int justscored);
-void evaluate_policy(int state, int justscored);
+void improve_policy();
+void evaluate_policy();
+void policy_iteration(const Eigen::Vector<int, 12>& state);
+int tobinary(const Eigen::Vector<int, 12>& state);
+int countsquares(int state);
 
 /// DO NOT CHANGE THE NAME AND FORMAT OF THIS FUNCTION
 double getOptimalValue(const Eigen::Vector<int, 12>& state){
-  policy_iteration(state);
+  policy_iteration();
   return value[tobinary(state)];
 }
 
 /// DO NOT CHANGE THE NAME AND FORMAT OF THIS FUNCTION
 int getOptimalAction(const Eigen::Vector<int, 12>& state){
-  policy_iteration(state);
+  policy_iteration();
   return policy[tobinary(state)];
 }
 
-void policy_iteration(const Eigen::Vector<int, 12>& state){
+void policy_iteration(){
   //store state-value and state-action in array and represent state in binary for index
   stable=0;
   converged=0;
-  //represent the state in binary
-  binarystate = tobinary(state);
 
   //initialize values
   value[4095] = 0; //4095 is terminal state
@@ -51,16 +51,16 @@ void policy_iteration(const Eigen::Vector<int, 12>& state){
     //Evaluate on-policy value recursively starting from given state
     while(!converged){
       converged = 1;
-      evaluate_policy(binarystate);
+      evaluate_policy();
     }
     converged=0;
 
     //policy improvement: set policy as argmax over current value function
-    improve_policy(binarystate);
+    improve_policy();
   }
 }
 
-void evaluate_policy(int state){
+void evaluate_policy(){
   int reward;
   int numstates;
   double valuesum;
@@ -69,58 +69,50 @@ void evaluate_policy(int state){
   int stateaction;
   int nextstate;
 
-  if(state == 4095){
-    return; //return if terminal state;
-  }
-  //do action according to policy
-  stateaction = state | policy[state];
-  //check for reward
-  squares_prev = countsquares(state);
-  squares_after = countsquares(stateaction);
-  reward = squares_after-squares_prev;
+  for(int state=4094; state>=0; state--){ //for each state
+    //do action according to policy
+    stateaction = state | (1<<policy[state]);
+    //check for reward
+    squares_prev = countsquares(state);
+    squares_after = countsquares(stateaction);
+    reward = squares_after-squares_prev;
 
-//given an action, the reward is decided.
-// if received reward and not justwon, next state is simply stateaction (evalute this state)
-// if received reward but just won then let opponent play evaluate nextstate and set justwon to 1.
-// if not received reward, then let opponent play, and evaluate nextstate and set justwon to 0.
-
-  if(reward){
-    nextstate = stateaction;
-    evaluate_policy(nextstate); //another chance
-    if(value[state] != (reward + value[nextstate])){
-      value[state] = reward + value[nextstate]; //update value
-      converged = 0;
-    }
-    return;
-  }
-  else{
-    for(int i=0; i<12; i++){ //update V(s') first
-      if(!(stateaction&(1<<i))){ //for all s'
-        nextstate = stateaction | (1<<i);
-        evaluate_policy(nextstate, 0);
+    // given an action, the reward is decided
+    if(reward){
+      nextstate = stateaction;
+      if(value[state] != (reward + value[nextstate])){
+        value[state] = reward + value[nextstate]; //update value
+        converged = 0;
       }
     }
-  }
-
-  numstates =0;
-  valuesum=0;
-  for(int i=0; i<12; i++){ //loop to sum over V(s')
-    if(!(stateaction&(1<<i))){
-      nextstate = stateaction | (1<<i);
-      valuesum += value[nextstate];
-      numstates++;
+    else{
+      for(int i=0; i<12; i++){ //update V(s') first
+        if(!(stateaction&(1<<i))){ //for all s'
+          nextstate = stateaction | (1<<i);
+        }
+      }
     }
-  }
 
-  if(value[state] != (reward + valuesum/numstates)){
-    value[state] = reward + valuesum/numstates; //update value
-    converged = 0;
+    numstates =0;
+    valuesum=0;
+    for(int i=0; i<12; i++){ //loop to sum over V(s')
+      if(!(stateaction&(1<<i))){
+        nextstate = stateaction | (1<<i);
+        valuesum += value[nextstate];
+        numstates++;
+      }
+    }
+
+    if(value[state] != (reward + valuesum/numstates)){
+      value[state] = reward + valuesum/numstates; //update value
+      converged = 0;
+    }
   }
 }
 
 
 //policy improvement
-int improve_policy(int state){
+void improve_policy(){
   int reward;
   int numstates;
   double valuesum;
@@ -134,10 +126,10 @@ int improve_policy(int state){
   int stable;
 
   //update policy by taking argmax over new values
-  for(int i=0; i<4095; i++){ //for each state
+  for(int state=0; state<4095; state++){ //for each state
     maxactionvalue=-1;
     for(int j=0; j<12; j++){
-      if(!(i&(1<<j))){  //for each possible action
+      if(!(state&(1<<j))){  //for each possible action
         //do action
         stateaction = state | (1<<j);
         //check for reward
@@ -152,8 +144,8 @@ int improve_policy(int state){
           numstates=0;
           valuesum=0;
           for(int k=0; k<12; k++){
-            if(!(stateaction&(1<<i))){ //for all s'
-              nextstate = stateaction | (1<<i);
+            if(!(stateaction&(1<<k))){ //for all s'
+              nextstate = stateaction | (1<<k);
               valuesum += value[nextstate];
               numstates++;
             }
@@ -166,8 +158,8 @@ int improve_policy(int state){
         }
       }
     }
-    if(policy[i] != argmax){
-      policy[i] = argmax;
+    if(policy[state] != argmax){
+      policy[state] = argmax;
       stable = 0;
     }
   }
