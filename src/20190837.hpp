@@ -157,12 +157,10 @@ double expectedvalue(int state){
 //policy improvement
 void improve_policy(){
   int reward;
-  double expectedvalueofnextstate;
   double actionvalue;
   double maxactionvalue;
   int squares_prev;
   int squares_after;
-  int squares_remaining;
   int stateaction;
   int nextstate;
   int argmax;
@@ -183,8 +181,7 @@ void improve_policy(){
           actionvalue = reward + value[nextstate];
         }
         else{
-          expectedfuturevalue = expectedvalue(stateaction);
-          actionvalue = expectedvalueofnextstate; //since no reward
+          actionvalue = expectedvalue(stateaction);; //since no reward
         }
 
         if(actionvalue>maxactionvalue){
