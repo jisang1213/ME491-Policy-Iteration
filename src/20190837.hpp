@@ -2,13 +2,13 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
-#include <bitset>
-
 //global variables
 double value[4096]; //stores values for states from 0 to 4095
 int policy[4095]; //stores policy for states from 0 to 4094
 int stable;
 int converged;
+
+int numeval = 0;
 
 //prototypes
 void policy_iteration();
@@ -43,9 +43,9 @@ void policy_iteration(){
   //initialize policy
   for(int state=0; state<4095; state++){
     //search for possible action(empty spaces) from given state and choose first available action
-    for(int j=0; j<12; j++){
-      if(!(state&(1<<j))){//if space is empty
-        policy[state] = j; //initialize policy to first available action
+    for(int action=0; action<12; action++){
+      if(!(state&(1<<action))){//if space is empty
+        policy[state] = action; //initialize policy to first available action
         break;
       }
     }
@@ -69,19 +69,26 @@ void policy_iteration(){
     }
   }
 
-  std::cout<<"policy iterated"<<std::endl;
+//  std::cout<<"policy iterated\n"<<std::endl;
+//  for(int i=4095; i>=0; i--) {
+//    std::cout<<value[i]<<", ";
+//  }
+
+  std::cout << "times evaluated: \n" << numeval << std::endl;
+  std::cout<<"END\n"<<std::endl;
+
 }
 
 void evaluate_policy(){
   int reward;
   int squares_prev;
   int squares_after;
-  int squares_remaining;
   int stateaction;
   int nextstate;
   double expectedfuturevalue;
 
   for(int state=4094; state>=0; state--){ //for each state
+  //for(int state=0; state<4095; state++){ //TEST
     //do action according to policy
     stateaction = state | (1<<policy[state]);
 
@@ -99,7 +106,6 @@ void evaluate_policy(){
       }
     }
     else{
-      //TODO
       expectedfuturevalue = expectedvalue(stateaction);
       if(value[state] != expectedfuturevalue){
         value[state] = expectedfuturevalue; //update value
@@ -108,6 +114,7 @@ void evaluate_policy(){
     }
   }
   std::cout<<"policy evaluated"<<std::endl;
+  numeval++;
 }
 
 double expectedvalue(int state){
@@ -115,7 +122,6 @@ double expectedvalue(int state){
   int squares_prev;
   int squares_after;
   int stateaction;
-  int nextstate;
   int count=0;
   double sum=0;
   double average;

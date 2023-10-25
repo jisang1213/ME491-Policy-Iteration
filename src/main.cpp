@@ -3,7 +3,9 @@
 //std::cout<<"111"<<std::endl;
 int main() {
   Eigen::Vector<int, 12> state;
-  state << 0,0,0, 0,0,0, 0,0,0, 0,0,0;
+  state << 0,1,1, 1,1,1, 1,1,1, 1,1,1;
+
+  getOptimalValue(state);
 
   std::cout << "optimal value for the state: \n" << getOptimalValue(state) << std::endl;
   std::cout << "optimal action for the state: \n" << getOptimalAction(state) << std::endl;
