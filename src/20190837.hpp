@@ -7,7 +7,6 @@ double value[4096]; //stores values for states from 0 to 4095
 int policy[4095]; //stores policy for states from 0 to 4094
 int stable;
 int converged;
-
 int numeval = 0;
 
 //prototypes
@@ -33,6 +32,7 @@ int getOptimalAction(const Eigen::Vector<int, 12>& state){
 
 void policy_iteration(){
   //store state-value and state-action in array and represent state in binary for index
+  numeval = 0;
   stable=0;
   converged=0;
 
@@ -61,22 +61,20 @@ void policy_iteration(){
 
     //policy improvement: set policy as argmax over current value function
     improve_policy();
-    if(stable==0){
-      std::cout<<"policy unstable"<<std::endl;
-    }
-    else{
-      std::cout<<"policy stable"<<std::endl;
-    }
+//    if(stable==0){
+//      std::cout<<"policy unstable"<<std::endl;
+//    }
+//    else{
+//      std::cout<<"policy stable"<<std::endl;
+//    }
   }
 
-//  std::cout<<"policy iterated\n"<<std::endl;
 //  for(int i=4095; i>=0; i--) {
 //    std::cout<<value[i]<<", ";
 //  }
 
-  std::cout << "times evaluated: \n" << numeval << std::endl;
-  std::cout<<"END\n"<<std::endl;
-
+//  std::cout << "\nTimes evaluated: \n" << numeval << std::endl;
+//  std::cout<<"OPTIMAL VALUE/ACTION:\n"<<std::endl;
 }
 
 void evaluate_policy(){
@@ -113,7 +111,7 @@ void evaluate_policy(){
       }
     }
   }
-  std::cout<<"policy evaluated"<<std::endl;
+//  std::cout<<"policy evaluated"<<std::endl;
   numeval++;
 }
 
@@ -122,8 +120,8 @@ double expectedvalue(int state){
   int squares_prev;
   int squares_after;
   int stateaction;
-  int count=0;
-  double sum=0;
+  int count;
+  double sum;
   double average;
 
   //base case:
@@ -131,9 +129,10 @@ double expectedvalue(int state){
     return 0;
   }
   
-  //recursion:
+  //recursion: opponent plays until turn terminates. Return sum of values of next state weighted by probability
+  sum=0;
+  count=0;
   squares_prev = countsquares(state);
-  //opponent plays until turn terminates. return sum of values weighted by probability
   for(int action=0; action<12; action++){
     if(!(state&(1<<action))){//if action is available
       //do action
@@ -141,7 +140,7 @@ double expectedvalue(int state){
       squares_after = countsquares(stateaction);
       reward = squares_after-squares_prev;
       if(reward){
-        sum += expectedvalue(stateaction);
+        sum+=expectedvalue(stateaction);
       }
       else{
         sum+=value[stateaction];
@@ -150,7 +149,6 @@ double expectedvalue(int state){
     }
   }
   average = sum/count;
-
   return average;
 }
 
@@ -195,7 +193,7 @@ void improve_policy(){
       stable = 0;
     }
   }
-  std::cout<<"policy improved"<<std::endl;
+//  std::cout<<"policy improved"<<std::endl;
 }
 
 //auxillary functions
