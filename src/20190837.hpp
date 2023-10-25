@@ -183,10 +183,10 @@ void improve_policy(){
           actionvalue = reward + value[nextstate];
         }
         else{
-          squares_remaining = 4-squares_after;
-          expectedvalueofnextstate = squares_remaining - value[stateaction];
+          expectedfuturevalue = expectedvalue(stateaction);
           actionvalue = expectedvalueofnextstate; //since no reward
         }
+
         if(actionvalue>maxactionvalue){
           maxactionvalue = actionvalue;
           argmax = action;
