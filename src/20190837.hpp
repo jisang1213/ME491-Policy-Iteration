@@ -9,7 +9,7 @@ int stable;
 int converged;
 
 //prototypes
-void policy_iteration(const Eigen::Vector<int, 12>& state);
+void policy_iteration();
 void evaluate_policy();
 void improve_policy();
 int tobinary(const Eigen::Vector<int, 12>& state);
@@ -64,10 +64,10 @@ void policy_iteration(){
 
 void evaluate_policy(){
   int reward;
-  int numstates;
-  double valuesum;
+  double expectedvalueofnextstate;
   int squares_prev;
   int squares_after;
+  int squares_remaining;
   int stateaction;
   int nextstate;
 
@@ -88,26 +88,12 @@ void evaluate_policy(){
       }
     }
     else{
-      for(int i=0; i<12; i++){ //update V(s') first
-        if(!(stateaction&(1<<i))){ //for all s'
-          nextstate = stateaction | (1<<i);
-        }
+      squares_remaining = 4-squares_after;
+      expectedvalueofnextstate = squares_remaining - value[stateaction]; //user's expected value is remaining square - opponents value
+      if(value[state] != (reward + expectedvalueofnextstate)){
+        value[state] = reward + expectedvalueofnextstate; //update value
+        converged = 0;
       }
-    }
-
-    numstates =0;
-    valuesum=0;
-    for(int i=0; i<12; i++){ //loop to sum over V(s')
-      if(!(stateaction&(1<<i))){
-        nextstate = stateaction | (1<<i);
-        valuesum += value[nextstate];
-        numstates++;
-      }
-    }
-
-    if(value[state] != (reward + valuesum/numstates)){
-      value[state] = reward + valuesum/numstates; //update value
-      converged = 0;
     }
   }
 }
@@ -116,12 +102,12 @@ void evaluate_policy(){
 //policy improvement
 void improve_policy(){
   int reward;
-  int numstates;
-  double valuesum;
+  double expectedvalueofnextstate;
   double actionvalue;
   double maxactionvalue;
   int squares_prev;
   int squares_after;
+  int squares_remaining;
   int stateaction;
   int nextstate;
   int argmax;
@@ -130,10 +116,10 @@ void improve_policy(){
   //update policy by taking argmax over new values
   for(int state=0; state<4095; state++){ //for each state
     maxactionvalue=-1;
-    for(int j=0; j<12; j++){
-      if(!(state&(1<<j))){  //for each possible action
+    for(int action=0; action<12; action++){
+      if(!(state&(1<<action))){  //for each possible action
         //do action
-        stateaction = state | (1<<j);
+        stateaction = state | (1<<action);
         //check for reward
         squares_prev = countsquares(state);
         squares_after = countsquares(stateaction);
@@ -143,20 +129,13 @@ void improve_policy(){
           actionvalue = reward + value[nextstate];
         }
         else{
-          numstates=0;
-          valuesum=0;
-          for(int k=0; k<12; k++){
-            if(!(stateaction&(1<<k))){ //for all s'
-              nextstate = stateaction | (1<<k);
-              valuesum += value[nextstate];
-              numstates++;
-            }
-          }
-          actionvalue = valuesum/numstates; //since no reward
+          squares_remaining = 4-squares_after;
+          expectedvalueofnextstate = squares_remaining - value[stateaction];
+          actionvalue = expectedvalueofnextstate; //since no reward
         }
         if(actionvalue>maxactionvalue){
           maxactionvalue = actionvalue;
-          argmax = j;
+          argmax = action;
         }
       }
     }
@@ -175,8 +154,8 @@ int tobinary(const Eigen::Vector<int, 12>& state){
     binarystate |= (state(i) << i);
   }
   return binarystate;
-  //value = value[binarystate]
-  //action = action[binarystate];
+  //Access values using value[binarystate]
+  //Access actions using policy[binarystate]
 }
 
 int countsquares(int state){
