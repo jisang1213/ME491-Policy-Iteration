@@ -16,6 +16,7 @@ void evaluate_policy();
 void improve_policy();
 int tobinary(const Eigen::Vector<int, 12>& state);
 int countsquares(int state);
+double expectedvalue(int state);
 
 
 /// DO NOT CHANGE THE NAME AND FORMAT OF THIS FUNCTION
@@ -36,9 +37,8 @@ void policy_iteration(){
   converged=0;
 
   //initialize values
-  value[4095] = 0; //4095 is the terminal state
-  for(int state=0; state<4095; state++){
-    value[state]=2; //initialize values to 2 
+  for(int state=0; state<4096; state++){
+    value[state]=0;
   }
   //initialize policy
   for(int state=0; state<4095; state++){
@@ -74,12 +74,12 @@ void policy_iteration(){
 
 void evaluate_policy(){
   int reward;
-  double expectedvalueofnextstate;
   int squares_prev;
   int squares_after;
   int squares_remaining;
   int stateaction;
   int nextstate;
+  double expectedfuturevalue;
 
   for(int state=4094; state>=0; state--){ //for each state
     //do action according to policy
@@ -99,10 +99,10 @@ void evaluate_policy(){
       }
     }
     else{
-      squares_remaining = 4-squares_after;
-      expectedvalueofnextstate = squares_remaining - value[stateaction]; //user's expected value is remaining square - opponents value
-      if(value[state] != (reward + expectedvalueofnextstate)){
-        value[state] = reward + expectedvalueofnextstate; //update value
+      //TODO
+      expectedfuturevalue = expectedvalue(stateaction);
+      if(value[state] != expectedfuturevalue){
+        value[state] = expectedfuturevalue; //update value
         converged = 0;
       }
     }
@@ -110,6 +110,43 @@ void evaluate_policy(){
   std::cout<<"policy evaluated"<<std::endl;
 }
 
+double expectedvalue(int state){
+  int reward;
+  int squares_prev;
+  int squares_after;
+  int stateaction;
+  int nextstate;
+  int count=0;
+  double sum=0;
+  double average;
+
+  //base case:
+  if(state==4095){
+    return 0;
+  }
+  
+  //recursion:
+  squares_prev = countsquares(state);
+  //opponent plays until turn terminates. return sum of values weighted by probability
+  for(int action=0; action<12; action++){
+    if(!(state&(1<<action))){//if action is available
+      //do action
+      stateaction = state | (1<<action);
+      squares_after = countsquares(stateaction);
+      reward = squares_after-squares_prev;
+      if(reward){
+        sum += expectedvalue(stateaction);
+      }
+      else{
+        sum+=value[stateaction];
+      }
+      count++;
+    }
+  }
+  average = sum/count;
+
+  return average;
+}
 
 //policy improvement
 void improve_policy(){
