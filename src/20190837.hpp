@@ -64,6 +64,9 @@ void policy_iteration(){
     if(stable==0){
       std::cout<<"policy unstable"<<std::endl;
     }
+    else{
+      std::cout<<"policy stable"<<std::endl;
+    }
   }
 
   std::cout<<"policy iterated"<<std::endl;
