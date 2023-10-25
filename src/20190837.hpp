@@ -2,9 +2,11 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
+#include <bitset>
+
 //global variables
-double value[4096]; //stores values
-int policy[4095]; //stores policy
+double value[4096]; //stores values for states from 0 to 4095
+int policy[4095]; //stores policy for states from 0 to 4094
 int stable;
 int converged;
 
@@ -28,7 +30,6 @@ int getOptimalAction(const Eigen::Vector<int, 12>& state){
   return policy[tobinary(state)];
 }
 
-
 void policy_iteration(){
   //store state-value and state-action in array and represent state in binary for index
   stable=0;
@@ -43,9 +44,10 @@ void policy_iteration(){
   for(int state=0; state<4095; state++){
     //search for possible action(empty spaces) from given state and choose first available action
     for(int j=0; j<12; j++){
-      if(!(state&(1<<j))) //if space is empty
-      policy[state] = j; //initialize policy to first available action
-      break;
+      if(!(state&(1<<j))){//if space is empty
+        policy[state] = j; //initialize policy to first available action
+        break;
+      }
     }
   }
 
@@ -59,7 +61,12 @@ void policy_iteration(){
 
     //policy improvement: set policy as argmax over current value function
     improve_policy();
+    if(stable==0){
+      std::cout<<"policy unstable"<<std::endl;
+    }
   }
+
+  std::cout<<"policy iterated"<<std::endl;
 }
 
 void evaluate_policy(){
@@ -74,6 +81,7 @@ void evaluate_policy(){
   for(int state=4094; state>=0; state--){ //for each state
     //do action according to policy
     stateaction = state | (1<<policy[state]);
+
     //check for reward
     squares_prev = countsquares(state);
     squares_after = countsquares(stateaction);
@@ -96,6 +104,7 @@ void evaluate_policy(){
       }
     }
   }
+  std::cout<<"policy evaluated"<<std::endl;
 }
 
 
@@ -111,7 +120,6 @@ void improve_policy(){
   int stateaction;
   int nextstate;
   int argmax;
-  int stable;
 
   //update policy by taking argmax over new values
   for(int state=0; state<4095; state++){ //for each state
@@ -144,8 +152,8 @@ void improve_policy(){
       stable = 0;
     }
   }
+  std::cout<<"policy improved"<<std::endl;
 }
-
 
 //auxillary functions
 int tobinary(const Eigen::Vector<int, 12>& state){
